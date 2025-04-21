@@ -3,6 +3,7 @@ Requirements
 - GLFW
 - CMake
 - Glad
+- GLM
 ```
 
 ## How to run
