@@ -5,7 +5,7 @@ set -e  # Exit on error
 # Configuration
 BUILD_DIR="cmake_data"
 BIN_SUBDIR="build"
-EXECUTABLE="MyProject"  # Change if your project name differs
+EXECUTABLE="opengl-toy"  # Change if your project name differs
 
 echo "🧹 Cleaning previous build..."
 rm -rf "$BUILD_DIR"
