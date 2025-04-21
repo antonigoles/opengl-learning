@@ -1,4 +1,5 @@
 #include "../include/shader.h"
+#include <stdexcept>
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     // 1. retrieve the vertex/fragment source code from filePath
@@ -93,3 +94,10 @@ void Shader::setInt(const std::string &name, int value) const {
 void Shader::setFloat(const std::string &name, float value) const {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
+
+void Shader::setVec3(const std::string &name, const std::vector<float>& vec3) const {
+    if (vec3.size() < 3) {
+        throw new std::invalid_argument("Invalid vector size");
+    }
+    glUniform3f(glGetUniformLocation(ID, name.c_str()), vec3[0], vec3[1], vec3[2]);
+};

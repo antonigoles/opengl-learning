@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "./include/shader.h"
+#include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -81,6 +82,8 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         shader.use();
+
+        shader.setVec3("shift", {(float)std::sin(glfwGetTime()), 0.0f, 0.0f});
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
