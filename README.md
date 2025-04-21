@@ -3,6 +3,7 @@ Requirements
 - GLFW
 - CMake
 - Glad
+- stb_image
 ```
 
 ## How to run

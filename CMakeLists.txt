@@ -3,9 +3,10 @@ project(opengl-toy)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Include your headers
-include_directories(includes)
+include_directories(include)
 
 # Collect sources
 file(GLOB SRC_FILES src/*.cpp)
@@ -33,3 +34,13 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw OpenGL::GL)
+target_link_libraries(${PROJECT_NAME} PRIVATE glfw OpenGL::GL)
+
+if (PROJECT_IS_TOP_LEVEL AND UNIX)
+    # Create symlink to compile_commands.json for IDE to pick it up
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
+    )
+endif()
