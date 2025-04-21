@@ -1,13 +1,17 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/quaternion_common.hpp>
+#include <glm/geometric.hpp>
 #include <iostream>
 #include <shader.hpp>
 #include <stb_image.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <camera.hpp>
 
+Camera camera(45.0f, Camera::CLAMP_ROTATION, CameraType::FPS_CAMERA);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -110,7 +114,7 @@ GLFWwindow* init_window() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Open GL Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Open GL Window", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -125,10 +129,64 @@ GLFWwindow* init_window() {
         return NULL;
     }
 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     return window;
+}
+
+static float currentCameraSpeed = 0.0f;
+void processInput(GLFWwindow *window, float deltaTime)
+{
+    const float maxCameraSpeed = 8.5f; // units per second
+    const float accelerationTime = 0.2f; // seconds
+    const float acceleration = maxCameraSpeed / accelerationTime;
+    currentCameraSpeed += acceleration * (deltaTime);
+    currentCameraSpeed = std::min(currentCameraSpeed, maxCameraSpeed);
+
+    glm::vec3 movementVector = glm::vec3(0.0f, 0.0f, 0.0f);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        movementVector += glm::vec3(1.0f, 0.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        movementVector -= glm::vec3(1.0f, 0.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        movementVector -= glm::vec3(0.0f, 0.0f, 1.0f);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        movementVector += glm::vec3(0.0f, 0.0f, 1.0f);
+
+    if (glm::length(movementVector) > 0.0f) {
+        movementVector = glm::normalize(movementVector) * currentCameraSpeed * deltaTime;
+        camera.moveByRelative(movementVector.x, movementVector.y, movementVector.z);
+    } else {
+        currentCameraSpeed = 0.0f;
+    }
+
+    std::cout << "speed: " << currentCameraSpeed << std::endl;
+}
+
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    static float yaw = -90.0f;
+    static float pitch = 0.0f;
+    static float lastX = 400, lastY = 300;
+    static bool firstMouse = true;
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse=false;
+    }
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates range from bottom to top
+    lastX = xpos;
+    lastY = ypos;
+
+    const float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    camera.rotateCameraBy(yoffset, xoffset);
 }
 
 int main()
@@ -142,6 +200,7 @@ int main()
         "shaders/vertex/vert0.vert",
         "shaders/fragment/frag0.frag"
     );
+
     GLuint vao = preprocess_cube();
 
     GLuint container_texture = load_jpg_texture("assets/container.jpg", GL_TEXTURE0);
@@ -168,28 +227,36 @@ int main()
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection;
 
-    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
 
-    shader.setMat4x4("model", model);
-    shader.setMat4x4("view", view);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     while(!glfwWindowShouldClose(window))
     {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        processInput(window, deltaTime);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glEnable(GL_DEPTH_TEST);
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
-        projection = glm::perspective(glm::radians(65.0f), (float)width / (float)height, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.getFov()), (float)width / (float)height, 0.1f, 100.0f);
         shader.setMat4x4("projection", projection);
+
+        view = camera.getLookAtMatrix();
+        shader.setMat4x4("view", view);
 
         glBindVertexArray(vao);
         for (uint32_t i = 0; i<10; i++) {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
+            if (i%3==0) angle = glfwGetTime() * 80.0f;
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             shader.setMat4x4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 36);
