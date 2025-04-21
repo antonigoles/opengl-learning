@@ -1,8 +1,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <shader.h>
+#include <shader.hpp>
 #include <stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -75,8 +78,7 @@ GLuint load_png_texture(const char* path, int textureUnit) {
     return load_texture(path, textureUnit, GL_RGBA);
 }
 
-int main()
-{
+GLFWwindow* init_window() {
     std::cout << "[DEBUG] Initializing..." << "\n";
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -88,18 +90,28 @@ int main()
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
-        return -1;
+        return NULL;
     }
     glfwMakeContextCurrent(window);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
+        return NULL;
     }
 
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    return window;
+}
+
+int main()
+{
+    GLFWwindow* window = init_window();
+    if(window == NULL) {
+        return -1;
+    }
 
     Shader shader(
         "shaders/vertex/vert0.vert",
@@ -114,11 +126,20 @@ int main()
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
 
+
     while(!glfwWindowShouldClose(window))
     {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::rotate(
+            trans,
+            glm::radians((float)glfwGetTime() * 35.0f),
+            glm::vec3(0.0f, 1.0, 0.0)
+        );
+
+        shader.setMat4x4("transform", trans);
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

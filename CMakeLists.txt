@@ -33,12 +33,12 @@ add_executable(${PROJECT_NAME}
 # --- Link GLFW and OpenGL ---
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
 target_link_libraries(${PROJECT_NAME} PRIVATE stb_image)
-target_link_libraries(${PROJECT_NAME} PRIVATE glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw OpenGL::GL)
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw OpenGL::GL)
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if (PROJECT_IS_TOP_LEVEL AND UNIX)
     # Create symlink to compile_commands.json for IDE to pick it up
