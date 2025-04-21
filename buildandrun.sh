@@ -3,7 +3,7 @@
 set -e  # Exit on error
 
 # Configuration
-BUILD_DIR="cmake_data"
+BUILD_DIR=".cmakeData"
 BIN_SUBDIR="build"
 EXECUTABLE="opengl-toy"  # Change if your project name differs
 
