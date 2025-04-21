@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
@@ -169,11 +170,9 @@ int main()
 
     model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
     shader.setMat4x4("model", model);
     shader.setMat4x4("view", view);
-    shader.setMat4x4("projection", projection);
 
     while(!glfwWindowShouldClose(window))
     {
@@ -181,9 +180,10 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glEnable(GL_DEPTH_TEST);
 
-
-
-
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        projection = glm::perspective(glm::radians(65.0f), (float)width / (float)height, 0.1f, 100.0f);
+        shader.setMat4x4("projection", projection);
 
         glBindVertexArray(vao);
         for (uint32_t i = 0; i<10; i++) {
