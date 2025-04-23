@@ -1,83 +1,23 @@
+#include <core/SceneObject/SceneObject.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_common.hpp>
 #include <glm/geometric.hpp>
 #include <iostream>
-#include <shader.hpp>
+#include <core/shader.hpp>
 #include <stb_image.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <camera.hpp>
+#include <core/camera.hpp>
+#include <core/SceneObject/SceneObjectBuilder.hpp>
+#include <vector>
 
-Camera camera(45.0f, Camera::CLAMP_ROTATION, CameraType::FPS_CAMERA);
+Camera camera(65.0f, Camera::CLAMP_ROTATION, CameraType::FPS_CAMERA);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
-}
-
-GLuint preprocess_cube() {
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    };
-
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    return VAO;
 }
 
 GLuint load_texture(const char* path, int textureUnit, int pixelFormat, bool flipVertical = true) {
@@ -137,8 +77,7 @@ GLFWwindow* init_window() {
 }
 
 static float currentCameraSpeed = 0.0f;
-void processInput(GLFWwindow *window, float deltaTime)
-{
+void processInput(GLFWwindow *window, float deltaTime) {
     const float maxCameraSpeed = 8.5f; // units per second
     const float accelerationTime = 0.2f; // seconds
     const float acceleration = maxCameraSpeed / accelerationTime;
@@ -162,8 +101,6 @@ void processInput(GLFWwindow *window, float deltaTime)
     } else {
         currentCameraSpeed = 0.0f;
     }
-
-    std::cout << "speed: " << currentCameraSpeed << std::endl;
 }
 
 
@@ -182,33 +119,31 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.1f;
+    const float sensitivity = 0.05f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
     camera.rotateCameraBy(yoffset, xoffset);
 }
 
-int main()
-{
+int main() {
     GLFWwindow* window = init_window();
     if(window == NULL) {
         return -1;
     }
 
-    Shader shader(
+    Shader* cubeShader = new Shader(
         "shaders/vertex/vert0.vert",
         "shaders/fragment/frag0.frag"
     );
 
-    GLuint vao = preprocess_cube();
+    Shader* lightingShader = new Shader(
+        "shaders/vertex/vert0.vert",
+        "shaders/fragment/lightFrag.frag"
+    );
 
     GLuint container_texture = load_jpg_texture("assets/container.jpg", GL_TEXTURE0);
     GLuint awesomeface_texture = load_png_texture("assets/awesomeface.png", GL_TEXTURE1);
-
-    shader.use();
-    shader.setInt("texture1", 0);
-    shader.setInt("texture2", 1);
 
     glm::vec3 cubePositions[] = {
         glm::vec3( 0.0f,  0.0f,  0.0f),
@@ -223,14 +158,28 @@ int main()
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection;
-
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
     glfwSetCursorPosCallback(window, mouse_callback);
+
+    SceneObjectBuilder* sceneObjectBuilder = new SceneObjectBuilder(
+        lightingShader,
+        cubeShader
+    );
+
+    std::vector<SceneObject*> sceneObjects;
+
+    sceneObjectBuilder = sceneObjectBuilder
+        ->makeSimpleCube()
+        ->setShaderInt("texture1", 0)
+        ->setShaderInt("texture2", 1);
+
+    for (int i = 0; i<10; i++) {
+        sceneObjects.push_back(sceneObjectBuilder->build());
+        sceneObjects[i]->setPosition(cubePositions[i]);
+        sceneObjects[i]->logStateDebug();
+    }
 
     while(!glfwWindowShouldClose(window))
     {
@@ -243,23 +192,11 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glEnable(GL_DEPTH_TEST);
 
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-        projection = glm::perspective(glm::radians(camera.getFov()), (float)width / (float)height, 0.1f, 100.0f);
-        shader.setMat4x4("projection", projection);
+        glm::mat4 projection = camera.getProjectionMatrix(window);
+        glm::mat4 view = camera.getLookAtMatrix();
 
-        view = camera.getLookAtMatrix();
-        shader.setMat4x4("view", view);
-
-        glBindVertexArray(vao);
-        for (uint32_t i = 0; i<10; i++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            if (i%3==0) angle = glfwGetTime() * 80.0f;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            shader.setMat4x4("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (int i = 0; i<sceneObjects.size(); i++) {
+            sceneObjects[i]->render(projection, view);
         }
 
         glfwPollEvents();
